@@ -15,9 +15,16 @@ public class VRInput : MonoBehaviour {
             Debug.Log("Controller not initialized");
             return;
         }
+        
     }
 
     void OnTriggerEnter(Collider other) {
+
+        AudioSource sound = other.gameObject.GetComponent<AudioSource>();
+        if(sound != null) {
+            sound.Play();
+        }
+
         Debug.Log("Collider enter: " + other.name);
         if (controller.GetPressDown(SteamVR_Controller.ButtonMask.Trigger)) {
             Debug.Log("Enter press down");
@@ -44,6 +51,12 @@ public class VRInput : MonoBehaviour {
     }
 
     void OnTriggerExit(Collider other) {
+
+        AudioSource sound = other.gameObject.GetComponent<AudioSource>();
+        if (sound != null) {
+            sound.Stop();
+        }
+
         Debug.Log("Collider exit: " + other.name);
         if (controller.GetPressDown(SteamVR_Controller.ButtonMask.Trigger)) {
             Debug.Log("Exit press down");
