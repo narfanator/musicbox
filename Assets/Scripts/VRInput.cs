@@ -29,18 +29,17 @@ public class VRInput : MonoBehaviour {
             //Destroy(joint);
         }
     }
-
-    //private FixedJoint joint;
+    
     void OnTriggerStay(Collider other) {
         //Debug.Log("Stay: " + other.name);
         if(controller.GetPressDown(SteamVR_Controller.ButtonMask.Trigger)) {
             Debug.Log("Stay press down");
-            //joint = other.gameObject.AddComponent<FixedJoint>();
-            //joint.connectedBody = this.GetComponent<Rigidbody>();
+            FixedJoint joint = other.gameObject.AddComponent<FixedJoint>();
+            joint.connectedBody = this.GetComponent<Rigidbody>();
         }
         if (controller.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
             Debug.Log("Stay press up");
-            //Destroy(joint);
+            Destroy(other.gameObject.GetComponent<FixedJoint>());
         }
     }
 
