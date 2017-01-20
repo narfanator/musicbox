@@ -3,27 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
+/* This is an input module for turning a list of spherical colliders
+ * into "input objects" that can interact with the Unity UI system.
+ * 
+ * TODO: Make off-camera interactions happen.
+ */
+
 public class Input3D : BaseInputModule {
-    public List<GameObject> pointers;
-    
-    public override void ActivateModule() {
-        base.ActivateModule();
-    }
+    public static List<VRInput2> pointers = new List<VRInput2>();
 
-    public override void UpdateModule() {
-        base.UpdateModule();
-    }
+    void updateObjectsList() {
+        List<GameObject> enteredObjects = new List<GameObject>();
 
-    private List<GameObject> enteredObjects = new List<GameObject>();
-    public override void Process() {
-        foreach (GameObject pointer in pointers) {
+        foreach (VRInput2 vrPointer in pointers) {
+            GameObject pointer = vrPointer.gameObject;
+
             //TODO: Cache value?
             float pointerDepth = pointer.transform.lossyScale.z * pointer.GetComponent<SphereCollider>().radius;
 
             //Note: Only called for the activated module
             Vector3 pointerPos = Camera.main.WorldToScreenPoint(pointer.transform.position);
             PointerEventData pointerData = new PointerEventData(EventSystem.current) {
-                pointerId = -1,
+                pointerId = pointers.IndexOf(vrPointer) + 1, //Zero is for the mouse. TODO: Better enumeration?
                 position = pointerPos,
             };
             List<RaycastResult> results = new List<RaycastResult>();
@@ -36,19 +37,21 @@ public class Input3D : BaseInputModule {
 
                 if (Mathf.Abs(distanceFromPlane) < pointerDepth) {
                     enteredObjects.Add(res.gameObject);
-                    ExecuteEvents.ExecuteHierarchy(res.gameObject, new PointerEventData(eventSystem), ExecuteEvents.pointerEnterHandler);
+                    ExecuteEvents.ExecuteHierarchy(res.gameObject, pointerData, ExecuteEvents.pointerEnterHandler);
                 } else if (enteredObjects.Contains(res.gameObject)) {
                     enteredObjects.Remove(res.gameObject);
-                    ExecuteEvents.ExecuteHierarchy(res.gameObject, new PointerEventData(eventSystem), ExecuteEvents.pointerExitHandler);
+                    ExecuteEvents.ExecuteHierarchy(res.gameObject, pointerData, ExecuteEvents.pointerExitHandler);
                 }
             }
+
+            vrPointer.pointerData = pointerData;
+            vrPointer.enteredObjects = enteredObjects;
         }
     }
 
-    public override void DeactivateModule() {
-        base.DeactivateModule();
+    public override void Process() {
+        updateObjectsList();
+
+
     }
-
-
-    //  ExecuteEvents.ExecuteHierarchy(other.gameObject, new BaseEventData(eventSystem), ExecuteEvents.pointerEnterHandler);
 }

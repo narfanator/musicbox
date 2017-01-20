@@ -9,12 +9,13 @@ public class NewSound : MonoBehaviour {
     private AudioSource sound;
     public UnityEngine.UI.Text title;
     public int i = 0;
-    static FileInfo[] soundFiles;
+    //static FileInfo[] soundFiles;
+
+    public List<AudioClip> sounds = new List<AudioClip>();
 
     void Awake() {
-        soundFiles = (new DirectoryInfo("Assets/Sounds/")).GetFiles("*.wav");
+        //soundFiles = (new DirectoryInfo("Assets/Sounds/")).GetFiles("*.wav");
         sound = soundSphere.GetComponent<AudioSource>();
-        Debug.Log(soundFiles.Length);
     }
 
     // Use this for initialization
@@ -28,12 +29,21 @@ public class NewSound : MonoBehaviour {
     }
 
     void Sync() {
-        title.text = soundFiles[i].Name;
-        sound.clip = Resources.Load<AudioClip>("Sounds/" + soundFiles[i]);
+        title.text = sounds[i].name;//soundFiles[i].Name;
+        //string link = "file://" + soundFiles[i].FullName;
+        //Debug.Log(link);
+        //WWW www = new WWW(link);
+        AudioClip clip = sounds[i];//www.GetAudioClip(true);
+        if (clip) {
+            sound.clip = clip;
+            Debug.Log(sound.clip.length);
+        } else {
+            Debug.Log("Failed to load clip");
+        }
     }
 
     public void Next() {
-        if (i + 1 < soundFiles.Length) { i++; }
+        if (i + 1 < sounds.Count) { i++; }
         Sync();
     }
 
