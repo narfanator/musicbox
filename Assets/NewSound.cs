@@ -10,6 +10,7 @@ public class NewSound : MonoBehaviour {
     public UnityEngine.UI.Text title;
     public int i = 0;
     //static FileInfo[] soundFiles;
+    public GameObject soundSpheres;
 
     public List<AudioClip> sounds = new List<AudioClip>();
 
@@ -64,5 +65,16 @@ public class NewSound : MonoBehaviour {
     void OnCollisionEnter(Collision collision) {
         Debug.Log("collision enter");
         sound.PlayOneShot(sound.clip);
+    }
+
+    public GameObject roost;
+    public void spawnNewSphere() {
+        GameObject newSphere = Object.Instantiate(soundSphere);
+        Destroy(newSphere.GetComponent<FixedJoint>());
+        newSphere.transform.parent = roost.transform;
+        newSphere.transform.localPosition = new Vector3(0, 1.25f, 0);
+        newSphere.transform.localRotation = new Quaternion(0, 0, 0, 0);
+        soundSphere = newSphere;
+        sound = soundSphere.GetComponent<AudioSource>();
     }
 }

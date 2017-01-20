@@ -33,6 +33,8 @@ public class VRInput2 : MonoBehaviour {
         if (grabbedObject) {
             Vector3 v = (transform.position - lastPosition) / Time.deltaTime;
             grabbedObject.GetComponent<Rigidbody>().velocity = v;
+            Debug.Log("Sending End Drag");
+            ExecuteEvents.ExecuteHierarchy(grabbedObject.gameObject, pointerData, ExecuteEvents.endDragHandler);
         }
         Destroy(grabbedObject);
     }

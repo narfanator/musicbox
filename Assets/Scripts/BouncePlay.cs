@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class BouncePlay : MonoBehaviour {
+    public NewSound controller;
 
     public AudioSource source;
 
@@ -16,5 +17,11 @@ public class BouncePlay : MonoBehaviour {
     void OnCollisionEnter(Collision collision) {
         //Use our source to play our sound
         source.PlayOneShot(source.clip, source.volume);
+    }
+
+    public void endDragHandler() {
+        Debug.Log("Ending drag");
+        transform.parent = controller.soundSpheres.transform;
+        controller.spawnNewSphere();
     }
 }
