@@ -18,4 +18,29 @@ public class MultipleInputModulesHack : BaseInputModule {
             module.Process();
         }
     }
+
+    //TODO: Properly place.
+    public static List<GameObject> updateObjectsList(List<GameObject> newObjects, List<GameObject> oldObjects, PointerEventData pointerData) {
+        // Collect all the hit objects
+        List<GameObject> _enteredObjects = new List<GameObject>();
+        foreach (GameObject obj in newObjects) {
+            _enteredObjects.Add(obj);
+
+            if (oldObjects.Contains(obj)) {
+                ExecuteEvents.ExecuteHierarchy<IPointerHoverHandler>(obj, pointerData, (x, y) => x.onPointerHover());
+            } else {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerEnterHandler);
+            }
+        }
+
+        // Any objects in the prior list of entered object that are not in the hit list, are exited.
+        foreach (GameObject obj in oldObjects) {
+            if (!_enteredObjects.Contains(obj)) {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerExitHandler);
+            }
+        }
+
+        //Update for next frame
+        return _enteredObjects;
+    }
 }

@@ -10,48 +10,52 @@ using UnityEngine.EventSystems;
  */
 
 public class Input3D : BaseInputModule {
-    public static List<VRInput2> pointers = new List<VRInput2>();
+    //public static List<VRInput2> pointers = new List<VRInput2>();
 
-    void updateObjectsList() {
-        List<GameObject> enteredObjects = new List<GameObject>();
+    public List<SphereCollider> pointers = new List<SphereCollider>();
+    Dictionary<SphereCollider, List<GameObject>> enteredObjectsByPointer = new Dictionary<SphereCollider, List<GameObject>>();
 
-        foreach (VRInput2 vrPointer in pointers) {
-            GameObject pointer = vrPointer.gameObject;
+    public override void Process() {
 
-            //TODO: Cache value?
-            float pointerDepth = pointer.transform.lossyScale.z * pointer.GetComponent<SphereCollider>().radius;
+        // Step 1: Make sure every pointer has an entered objects list
+        // TODO: If the pointer object is removed, does this all cleanly delete, or not...?
+        foreach(SphereCollider pointer in pointers) {
+            if(!enteredObjectsByPointer.ContainsKey(pointer)) {
+                enteredObjectsByPointer.Add(pointer, new List<GameObject>());
+            }
+        }
 
-            //Note: Only called for the activated module
+        // Step 2: For each pointer, find the objects we care about
+        foreach(SphereCollider pointer in pointers) {
+            
+            // Perform the ray cast
             Vector3 pointerPos = Camera.main.WorldToScreenPoint(pointer.transform.position);
             PointerEventData pointerData = new PointerEventData(EventSystem.current) {
-                pointerId = pointers.IndexOf(vrPointer) + 1, //Zero is for the mouse. TODO: Better enumeration?
+                pointerId = pointers.IndexOf(pointer) + 1, //Zero is for the mouse. TODO: Better enumeration?
                 position = pointerPos,
             };
             List<RaycastResult> results = new List<RaycastResult>();
             EventSystem.current.RaycastAll(pointerData, results);
 
-            //We only have to worry about 2d objects, here; 3D objects are handled by colliders
-            foreach (RaycastResult res in results) {
+            // Filter by depth
+            float pointerDepth = pointer.transform.lossyScale.z * pointer.radius;
+            List<GameObject> enteredObjects = new List<GameObject>();
+            foreach(RaycastResult res in results) {
+
                 Vector3 relativeVector = res.gameObject.transform.position - pointer.transform.position;
                 float distanceFromPlane = Vector3.Dot(res.gameObject.transform.forward, relativeVector);
 
                 if (Mathf.Abs(distanceFromPlane) < pointerDepth) {
                     enteredObjects.Add(res.gameObject);
-                    ExecuteEvents.ExecuteHierarchy(res.gameObject, pointerData, ExecuteEvents.pointerEnterHandler);
                 } else if (enteredObjects.Contains(res.gameObject)) {
                     enteredObjects.Remove(res.gameObject);
-                    ExecuteEvents.ExecuteHierarchy(res.gameObject, pointerData, ExecuteEvents.pointerExitHandler);
                 }
             }
 
-            vrPointer.pointerData = pointerData;
-            vrPointer.enteredObjects = enteredObjects;
+            // Step 2a:  
+            enteredObjectsByPointer[pointer] = MultipleInputModulesHack.updateObjectsList(enteredObjects, enteredObjectsByPointer[pointer], pointerData);
         }
     }
 
-    public override void Process() {
-        updateObjectsList();
 
-
-    }
 }

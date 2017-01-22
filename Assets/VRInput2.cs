@@ -16,7 +16,7 @@ public class VRInput2 : MonoBehaviour {
     public List<GameObject> enteredObjects = new List<GameObject>();
 
     void Start() {
-        Input3D.pointers.Add(this);
+        //Input3D.pointers.Add(this);
 
         sphereCollider = GetComponent<SphereCollider>(); //TODO: Tricks with reset, execute in edit, etc
         trackedObj = GetComponent<SteamVR_TrackedObject>();
