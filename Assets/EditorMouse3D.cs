@@ -14,13 +14,27 @@ public class EditorMouse3D : BaseInputModule {
     private List<GameObject> enteredObjects = new List<GameObject>();
 
     /// <summary>
-    ///  CURRENT STEP: Okay, clicking is more complicated than I thought...
-    ///  Probably want to turtles-all-the-way this shit.
-    ///  Raycasters check for which objects are in and which are out, and let the "event system" know
-    ///  Event System then watches for button events...?
-    ///  Interpreted events are triggered (drag, click (down/up on the same object within reasonable time / distance), etc)
-    /// </summary>
-    /// 
+    ///  pointerEnterHandler - Check (inherited)
+    ///  (pointerHoverHandler) - Added (inherited)
+    ///  pointerEnterHandler - Check (inherited)
+    ///  pointerDownHandler - Check
+    ///  pointerUpHandler - Check
+    ///  pointerClickHandler - Checkish. Needs to use object lists, not epsilons
+    ///  initializePotentialDrag - Check, but not understood?
+    ///  beginDragHandler - Checkish...? Use object lists rather than epsilons...?
+    ///  dragHandler - Check
+    ///  endDragHandler - Check
+    ///  dropHandler - Check, but not understood?
+    ///  scrollHandler
+    ///  selectHandler
+    ///  deselectHandler
+    ///  moveHandler
+    ///  submitHandler
+    ///  cancelHandler
+    ///  
+    /// Notes:
+    /// Currently, clicking is handled by an epsilon detection. The way it's supposed to work is that the pointer gets a "down" over the obj, and then an "up" over the obj.
+    /// PointerEventData can store time and scroll delta!
     public GameObject handle;
     public GameObject handle2;
 
@@ -42,11 +56,14 @@ public class EditorMouse3D : BaseInputModule {
         EventSystem.current.RaycastAll(pointerData, results);
         List<GameObject> objs = (from r in results select r.gameObject).ToList();
 
-        pointerData.position = worldPosition; // But the *world* position for event handling. (WTF, unity?)
+        // But the *world* position for event handling. (WTF, unity?)
+        // Specifically - for sliders. WTF?
+        // Note: Thankfully, the Z position is irrellevant.
+        // Also, definitely still something wrong - but this is the most correct, and "good enough" for now
+        // TODO: Consequences of sending world position as the enter/exit 
+        pointerData.position = worldPosition; 
 
         enteredObjects = MultipleInputModulesHack.updateObjectsList(objs, enteredObjects, pointerData);
-
-        DrawDebugLines(worldPosition);
 
         if (Input.GetMouseButtonDown(0)) {
             foreach (GameObject obj in enteredObjects) {
@@ -60,6 +77,13 @@ public class EditorMouse3D : BaseInputModule {
                 ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerUpHandler);
             }
             onPointerUp(worldPosition, pointerData);
+        }
+        
+        if (Input.mouseScrollDelta != Vector2.zero) {
+            pointerData.scrollDelta = Input.mouseScrollDelta;
+            foreach (GameObject obj in enteredObjects) {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerUpHandler);
+            }
         }
     }
 
