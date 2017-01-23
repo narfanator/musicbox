@@ -82,7 +82,7 @@ public class EditorMouse3D : BaseInputModule {
         if (Input.mouseScrollDelta != Vector2.zero) {
             pointerData.scrollDelta = Input.mouseScrollDelta;
             foreach (GameObject obj in enteredObjects) {
-                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerUpHandler);
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.scrollHandler);
             }
         }
     }
