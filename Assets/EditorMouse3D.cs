@@ -13,20 +13,65 @@ public class EditorMouse3D : BaseInputModule {
 
     private List<GameObject> enteredObjects = new List<GameObject>();
 
-    public override void Process() {
-        Vector3 worldPoint = MainGameViewToWorldPoint(Input.mousePosition);
+    /// <summary>
+    ///  CURRENT STEP: Okay, clicking is more complicated than I thought...
+    ///  Probably want to turtles-all-the-way this shit.
+    ///  Raycasters check for which objects are in and which are out, and let the "event system" know
+    ///  Event System then watches for button events...?
+    ///  Interpreted events are triggered (drag, click (down/up on the same object within reasonable time / distance), etc)
+    /// </summary>
 
+    public override void Process() {
+        Vector3 worldPosition = MainGameViewToWorldPoint(Input.mousePosition);
         PointerEventData pointerData = new PointerEventData(EventSystem.current) {
             pointerId = 0,
-            position = MainGameViewToWorldPoint(Input.mousePosition),
+            position = worldPosition,
         };
 
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(pointerData, results);
-
         List<GameObject> objs = (from r in results select r.gameObject).ToList();
 
         enteredObjects = MultipleInputModulesHack.updateObjectsList(objs, enteredObjects, pointerData);
+
+        if(Input.GetMouseButtonDown(0)) {
+            Debug.Log("Mouse down!");
+            foreach (GameObject obj in enteredObjects) {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerDownHandler);
+            }
+            onPointerDown(worldPosition, pointerData);
+        } else if (Input.GetMouseButton(0)) {
+            Debug.Log("Mouse held!");
+            //TODO: The event that goes here...?
+        } else if (Input.GetMouseButtonUp(0)) {
+            Debug.Log("Mouse up!");
+            foreach (GameObject obj in enteredObjects) {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerUpHandler);
+            }
+            onPointerUp(worldPosition, pointerData);
+        }
+    }
+
+    public float clickTimeEpsilon = 0.1f;
+    public float clickPositionEpsilon = 0.1f;
+    float pointerDownTime;
+    Vector3 pointerDownPos;
+    void onPointerDown(Vector3 pos, PointerEventData pointerData) {
+        pointerDownTime = Time.time;
+        pointerDownPos = pos;
+    }
+    void onPointerHeld(Vector3 pos, PointerEventData pointerData) {
+        //TODO: Drag stuff...?
+    }
+    void onPointerUp(Vector3 pos, PointerEventData pointerData) {
+        float timeDelta = Mathf.Abs(Time.time - pointerDownTime);
+        float posDelta = (pos - pointerDownPos).magnitude;
+
+        if(timeDelta < clickTimeEpsilon && posDelta < clickPositionEpsilon) {
+            foreach (GameObject obj in enteredObjects) {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerClickHandler);
+            }
+        }
     }
 
     public static Vector2 GetMainGameViewSize() {
