@@ -20,31 +20,42 @@ public class EditorMouse3D : BaseInputModule {
     ///  Event System then watches for button events...?
     ///  Interpreted events are triggered (drag, click (down/up on the same object within reasonable time / distance), etc)
     /// </summary>
+    /// 
+    public GameObject handle;
+    public GameObject handle2;
+
+    protected override void Awake() {
+        Debug.Log(handle.transform.position);
+        Debug.Log(handle2.transform.position);
+    }
 
     public override void Process() {
-        Vector3 worldPosition = MainGameViewToWorldPoint(Input.mousePosition);
+        Vector3 screenPosition = MainGameViewToScreenPoint(Input.mousePosition);
+        Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+
         PointerEventData pointerData = new PointerEventData(EventSystem.current) {
             pointerId = 0,
-            position = worldPosition,
+            position = screenPosition, //Need to use the screen position for the raycast...
         };
 
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(pointerData, results);
         List<GameObject> objs = (from r in results select r.gameObject).ToList();
 
+        pointerData.position = worldPosition; // But the *world* position for event handling. (WTF, unity?)
+
         enteredObjects = MultipleInputModulesHack.updateObjectsList(objs, enteredObjects, pointerData);
 
-        if(Input.GetMouseButtonDown(0)) {
-            Debug.Log("Mouse down!");
+        DrawDebugLines(worldPosition);
+
+        if (Input.GetMouseButtonDown(0)) {
             foreach (GameObject obj in enteredObjects) {
-                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerDownHandler);
+               ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerDownHandler);
             }
             onPointerDown(worldPosition, pointerData);
         } else if (Input.GetMouseButton(0)) {
-            Debug.Log("Mouse held!");
-            //TODO: The event that goes here...?
+            onPointerHeld(worldPosition, pointerData);
         } else if (Input.GetMouseButtonUp(0)) {
-            Debug.Log("Mouse up!");
             foreach (GameObject obj in enteredObjects) {
                 ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerUpHandler);
             }
@@ -54,22 +65,49 @@ public class EditorMouse3D : BaseInputModule {
 
     public float clickTimeEpsilon = 0.1f;
     public float clickPositionEpsilon = 0.1f;
+    bool dragging = false;
     float pointerDownTime;
     Vector3 pointerDownPos;
     void onPointerDown(Vector3 pos, PointerEventData pointerData) {
         pointerDownTime = Time.time;
         pointerDownPos = pos;
+        
+        foreach (GameObject obj in enteredObjects) {
+            //TODO: Correct place for this event...?
+            ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.initializePotentialDrag);
+        }
     }
     void onPointerHeld(Vector3 pos, PointerEventData pointerData) {
         //TODO: Drag stuff...?
-    }
-    void onPointerUp(Vector3 pos, PointerEventData pointerData) {
         float timeDelta = Mathf.Abs(Time.time - pointerDownTime);
         float posDelta = (pos - pointerDownPos).magnitude;
 
-        if(timeDelta < clickTimeEpsilon && posDelta < clickPositionEpsilon) {
+        if(posDelta > clickPositionEpsilon && !dragging) {
+            dragging = true;
             foreach (GameObject obj in enteredObjects) {
-                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerClickHandler);
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.beginDragHandler);
+            }
+        } else if(dragging) {
+            foreach (GameObject obj in enteredObjects) {
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.dragHandler);
+            }
+        }
+    }
+    void onPointerUp(Vector3 pos, PointerEventData pointerData) {
+        if (!dragging) {
+            float timeDelta = Mathf.Abs(Time.time - pointerDownTime);
+            float posDelta = (pos - pointerDownPos).magnitude;
+
+            if (timeDelta < clickTimeEpsilon && posDelta < clickPositionEpsilon) {
+                foreach (GameObject obj in enteredObjects) {
+                    ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerClickHandler);
+                }
+            }
+        } else {
+            foreach (GameObject obj in enteredObjects) {
+                //TODO: Difference between endDrag, and drop?
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.endDragHandler);
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.dropHandler);
             }
         }
     }
@@ -80,7 +118,7 @@ public class EditorMouse3D : BaseInputModule {
         System.Object Res = GetSizeOfMainGameView.Invoke(null, null);
         return (Vector2)Res;
     }
-    public static Vector3 MainGameViewToWorldPoint(Vector2 point) {
+    public static Vector3 MainGameViewToScreenPoint(Vector2 point) {
         //WARNING: Must have your aspect ratio set to 2:1 for these numbers to work.
         //TODO: Math to determine correct values from the main game view size, vs the screen size; aspect ratio stuff
 

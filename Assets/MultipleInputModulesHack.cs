@@ -30,6 +30,7 @@ public class MultipleInputModulesHack : BaseInputModule {
                 ExecuteEvents.ExecuteHierarchy<IPointerHoverHandler>(obj, pointerData, (x, y) => x.onPointerHover());
             } else {
                 ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerEnterHandler);
+                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.initializePotentialDrag);
             }
         }
 
