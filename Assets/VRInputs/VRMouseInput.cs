@@ -4,9 +4,10 @@ using UnityEngine.EventSystems;
 using System.Linq;
 
 public class VRMouseInput : VRInputModule {
+    //NOTE: Most TODOs mirrored to VR3DInput
     const int pointerId = 0; //TODO: What should this be, and why?
     const int mouseButton = 0; //TODO: What should this be, and why?
-    public float dragThreshold = 0.1f;
+    public float dragThreshold = 0.1f; //TODO: What should this be, and why?
     public override void Process() {
 
         // Update objects lists
@@ -86,6 +87,7 @@ public class VRMouseInput : VRInputModule {
         }
     }
 
+    //TODO: Raycast(vector2 screenPosition)?
     protected override List<GameObject> Raycast() {
         /// TODO: Why does the raycast want to be a screen position, but the pointerData when processing want to be a world position...?
 
