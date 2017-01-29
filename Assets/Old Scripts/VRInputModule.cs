@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
 public abstract class VRInputModule : BaseInputModule {
+    public int pointerId = -1; //TODO: Find a good way to autodetermine this
+
     public VRInputModule() : base() {
         currentObjects = new List<GameObject>();
         priorObjects = new List<GameObject>();

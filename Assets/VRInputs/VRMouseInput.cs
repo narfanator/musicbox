@@ -5,7 +5,7 @@ using System.Linq;
 
 public class VRMouseInput : VRInputModule {
     //NOTE: Most TODOs mirrored to VR3DInput
-    const int pointerId = 0; //TODO: What should this be, and why?
+    new const int pointerId = 0; //TODO: What should this be, and why?
     const int mouseButton = 0; //TODO: What should this be, and why?
     public float dragThreshold = 0.1f; //TODO: What should this be, and why?
     public override void Process() {
@@ -50,8 +50,8 @@ public class VRMouseInput : VRInputModule {
             onMouseScroll();
         }
     }
-
-    //TODO: Drag handling
+    
+    //TODO: May want to move these to base class, as they're shared with ViveControllerInput
     public List<GameObject> clickCandidates { get; protected set; } //TODO: Better name?
     protected void onPointerDown() {
         clickCandidates = currentObjects; //TODO: Copy, or reference? (Probably need to be a reference)
@@ -66,7 +66,7 @@ public class VRMouseInput : VRInputModule {
             ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.dragHandler);
 
             if (clickCandidates.Contains(obj)) {
-                ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerClickHandler);
+                //ExecuteEvents.ExecuteHierarchy(obj, pointerData, ExecuteEvents.pointerClickHandler); //TODO: Incorrect event. (Event needs to be made?)
             }
         }
     }

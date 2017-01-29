@@ -37,7 +37,7 @@ public class NewSound : MonoBehaviour {
         AudioClip clip = sounds[i];//www.GetAudioClip(true);
         if (clip) {
             sound.clip = clip;
-            Debug.Log(sound.clip.length);
+            //Debug.Log(sound.clip.length);
         } else {
             Debug.Log("Failed to load clip");
         }

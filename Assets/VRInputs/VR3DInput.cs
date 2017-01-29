@@ -4,11 +4,10 @@ using UnityEngine.EventSystems;
 using System.Linq;
 
 public class VR3DInput : VRInputModule {
-    public int pointerId;
     public SphereCollider cursor;
 
     public float dragThreshold = 0.1f;
-
+    
     public override void Process() {
         // Update objects lists
         priorObjects = currentObjects;
@@ -36,6 +35,7 @@ public class VR3DInput : VRInputModule {
         
     }
 
+    //TODO: Rename (or encapsulate) raycast
     //TODO: Probe points along the circle of the shere (right now, it's really just the center of the sphere)
     protected override List<GameObject> Raycast() {
         Vector3 screenPosition = Camera.main.WorldToScreenPoint(cursor.transform.position);
@@ -55,6 +55,16 @@ public class VR3DInput : VRInputModule {
             float distanceFromPlane = Vector3.Dot(res.gameObject.transform.forward, relativeVector);
             if (Mathf.Abs(distanceFromPlane) < pointerDepth) {
                 objs.Add(res.gameObject);
+            }
+        }
+
+        // Handle physics objects
+        //TODO: Is this the right way to do it? Will it cover the expected layer interaction physics stuff? Should anything else be checked in the collider?
+        // What about triggers vs non triggers? Also, always triggers on the cursor's collider... not ideal.
+        List<Collider> collisions = Physics.OverlapSphere(cursor.transform.position, pointerDepth).ToList();
+        foreach(Collider col in collisions) {
+            if (col.gameObject != cursor.gameObject) {
+                objs.Add(col.gameObject);
             }
         }
 
